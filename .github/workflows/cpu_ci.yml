@@ -32,8 +32,11 @@ jobs:
 
       - name: Install Python CLI
         run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
           cd python
-          pip install --break-system-packages -e .
+          python -m pip install --upgrade pip
+          python -m pip install -e .
 
       - name: Run engine tests directly
         run: |
@@ -42,12 +45,14 @@ jobs:
 
       - name: Run testforge end-to-end
         run: |
+          . .venv/bin/activate
           testforge init
           testforge discover
           testforge run --html build_report.html
 
       - name: Run analyze on the latest build
         run: |
+          . .venv/bin/activate
           testforge analyze
 
       - name: Upload HTML report

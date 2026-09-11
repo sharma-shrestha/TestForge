@@ -1,0 +1,42 @@
+# Build artifacts
+build/
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.exe
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# TestForge runtime artifacts
+.testforge/
+*.testforge.db
+testforge.db
+testforge.log
+reports/
+artifacts/
+
+# CUDA
+*.cubin
+*.ptx
+*.fatbin
+
+# Local env
+.env
+.env.local

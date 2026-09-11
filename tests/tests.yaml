@@ -1,0 +1,24 @@
+# Example tests.yaml manifest.
+#
+# Used to declare standalone test binaries (GoogleTest, ctest, custom)
+# that TestForge can't auto-discover. Auto-discovered tests (cpp_engine
+# tests registered via the TEST() macro, pytest files) don't need an
+# entry here - they're picked up automatically.
+
+tests:
+  - name: gtest.example
+    suite: gtest
+    kind: binary
+    binary: build/bin/example_cpp_tests
+    type: cpu
+    component: test_harness
+    timeout_ms: 60000
+
+  - name: gpu.matrix_mul
+    suite: gpu
+    kind: binary
+    binary: build/bin/example_gpu_tests
+    type: gpu
+    component: gpu_kernels
+    tags: [performance, gpu, regression_canary]
+    timeout_ms: 120000

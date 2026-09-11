@@ -1,0 +1,54 @@
+# GPU CI - runs on a self-hosted runner with an NVIDIA GPU.
+#
+# To enable this workflow you need to register a self-hosted runner on a
+# machine with the NVIDIA driver and CUDA toolkit installed, then add
+# the runner label "self-hosted, gpu" to the runner. The job assumes
+# /usr/local/cuda is on PATH and `nvidia-smi` works.
+#
+# If you don't have a self-hosted GPU runner, this workflow simply won't
+# fire - the CPU CI workflow covers the basics.
+
+name: GPU CI
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  gpu-tests:
+    runs-on: [self-hosted, gpu]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show GPU
+        run: nvidia-smi
+
+      - name: Build C++ engine with CUDA
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTESTFORGE_ENABLE_CUDA=ON
+          cmake --build build -j
+
+      - name: Install Python CLI
+        run: |
+          cd python
+          pip install --break-system-packages -e .
+
+      - name: Run full test suite (CPU + GPU)
+        run: |
+          testforge init
+          testforge run --html gpu_build_report.html
+
+      - name: Run analyze with assistant (if configured)
+        env:
+          ASSISTANT_API_KEY: ${{ secrets.ASSISTANT_API_KEY }}
+        run: |
+          testforge analyze --assistant || true
+
+      - name: Upload GPU build report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpu-build-report
+          path: gpu_build_report.html

@@ -1,0 +1,58 @@
+# CPU CI - runs on every push and PR.
+#
+# Builds the C++ engine + test binary, runs the test binary directly,
+# then installs the Python CLI and runs `testforge run` end-to-end.
+#
+# GPU tests run on a self-hosted runner - see gpu.yml. We don't try to
+# install CUDA in this CPU-only job because it's slow and fragile.
+
+name: CPU CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake python3 python3-pip python3-venv
+
+      - name: Build C++ engine (CPU-only, CUDA off)
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTESTFORGE_ENABLE_CUDA=OFF
+          cmake --build build -j
+
+      - name: Install Python CLI
+        run: |
+          cd python
+          pip install --break-system-packages -e .
+
+      - name: Run engine tests directly
+        run: |
+          ./build/bin/example_cpp_tests --list
+          ./build/bin/example_cpp_tests
+
+      - name: Run testforge end-to-end
+        run: |
+          testforge init
+          testforge discover
+          testforge run --html build_report.html
+
+      - name: Run analyze on the latest build
+        run: |
+          testforge analyze
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-report
+          path: build_report.html

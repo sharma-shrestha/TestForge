@@ -1,0 +1,27 @@
+--- a/cpu_math_tests.cpp
++++ b/cpu_math_tests.cpp
+@@ -6,6 +6,12 @@
+ #include <cmath>
+ #include <vector>
+ 
++// DEMO: simulated performance regression. A real regression would be
++// something subtle (worse memory access pattern, removed parallelism,
++// accidental sync inside the hot loop). Here we use a sleep to make
++// the demo deterministic across machines.
++#include <chrono>
++#include <thread>
+ // Naive row-major matrix multiply: C = A * B, all N x N.
+ static std::vector<float> matmul(const std::vector<float>& A,
+                                  const std::vector<float>& B, int N) {
+@@ -14,6 +19,11 @@ static std::vector<float> matmul(const std::vector<float>& A,
+             float s = 0.0f;
+             for (int k = 0; k < N; ++k) {
+                 s += A[i * N + k] * B[k * N + j];
++                // DEMO REGRESSION: waste time. This is the kind of thing
++                // a real perf regression would do - just less obviously.
++                if (k == 0) {
++                    std::this_thread::sleep_for(std::chrono::microseconds(50));
++                }
+             }
+             C[i * N + j] = s;
+         }

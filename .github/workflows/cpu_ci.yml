@@ -41,7 +41,7 @@ jobs:
       - name: Run engine tests directly
         run: |
           ./build/bin/example_cpp_tests --list
-          ./build/bin/example_cpp_tests --filter="Sanity.AlwaysPass,Math.FloatNear,Math.MatrixMultiplyIdentity,Math.MatrixMultiplyKnown,Math.DotProduct,Math.Reduction,PerfDemo.Sleep50ms"
+          ./build/bin/example_cpp_tests --filter "Sanity.AlwaysPass,Math.FloatNear,Math.MatrixMultiplyIdentity,Math.MatrixMultiplyKnown,Math.DotProduct,Math.Reduction,PerfDemo.Sleep50ms"
 
       - name: Run testforge end-to-end
         run: |

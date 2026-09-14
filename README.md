@@ -43,6 +43,78 @@ and parses the JSON report from stdout.
 This means the test binary contains BOTH the test code AND the engine that
 runs it. No more "worker with empty registry" problem.
 
+## High Level Data Flow
+
+                +------------------+
+                |  testforge CLI   |
+                |  (click)         |
+                +--------+---------+
+                         |
+                         v
+                +------------------+
+                |  Config loader   |
+                |  (.testforge/    |
+                |   config.yaml)   |
+                +--------+---------+
+                         |
+                         v
+                +------------------+
+                |   Discovery      |  walks filesystem, asks each test
+                +--------+---------+  binary to --list itself
+                         |
+                         v
+                +------------------+
+                |   Dependency     |  if --changed-files: filter to relevant
+                |   graph + select |  tests via graph + scoring
+                +--------+---------+
+                         |
+                         v
+                +------------------+
+                |   Scheduler      |  groups tests by binary, spawns each
+                |   (ThreadPool)   |  binary with --filter name1,name2
+                +--------+---------+
+                         |
+            +------------+------------+
+            v            v            v
+       +----------+ +----------+ +----------+
+       |Test Bin A| |Test Bin A| |Test Bin B|  (each is a subprocess)
+       |shard 1   | |shard 2   | |shard 3   |
+       +----+-----+ +----+-----+ +----+-----+
+            |            |            |
+            +------------+------------+
+                         | JSON on stdout
+                         v
+                +------------------+
+                |   Result         |  parse + attach GPU metrics by test_name
+                |   collector      |
+                └────────┬─────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │   Storage        │  SQLite / Postgres
+                │   (StorageBackend)│
+                └────────┬─────────┘
+                         │
+            ┌────────────┼────────────┐
+            ▼            ▼            ▼
+       ┌────────┐   ┌────────┐   ┌────────┐
+       │ Regress│   │ Flaky  │   │Cluster │
+       │ detect │   │ detect │   │failure │
+       └────┬───┘   └────┬───┘   └────┬───┘
+            │            │            │
+            └────────────┼────────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │   Reporter       │  terminal + HTML
+                └────────┬─────────┘
+                         │
+                         ▼
+                ┌──────────────────┐
+                │   (optional)     │
+                │   LLM analyst    │  OpenAI-compatible endpoint
+                └──────────────────┘
+
 ---
 
 ## What's inside
